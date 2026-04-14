@@ -6,10 +6,10 @@ import {
   Text,
   View,
   StyleSheet,
-  SafeAreaView,
   ActivityIndicator,
   Linking,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useLocalSearchParams, router, Stack } from "expo-router";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/stores/authStore";
@@ -19,6 +19,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { StatusBar } from "expo-status-bar";
 
 export default function OrganDetailScreen() {
+  const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams();
   const profile = useAuthStore((s) => s.profile);
   const [request, setRequest] = useState<OrganRequest | null>(null);
@@ -102,25 +103,23 @@ export default function OrganDetailScreen() {
       <StatusBar style="light" />
       <Stack.Screen options={{ headerShown: false }} />
       
-      <View style={[styles.header, { backgroundColor: accentColor }]}>
-        <SafeAreaView>
-          <View style={styles.headerTop}>
-            <Pressable onPress={() => router.back()} style={styles.backBtn}>
-              <Ionicons name="chevron-back" size={24} color="#FFF" />
+      <View style={[styles.header, { backgroundColor: accentColor, paddingTop: insets.top + 10 }]}>
+        <View style={styles.headerTop}>
+          <Pressable onPress={() => router.back()} style={styles.backBtn}>
+            <Ionicons name="chevron-back" size={24} color="#FFF" />
+          </Pressable>
+          <Text style={styles.headerTitle}>Organ Request</Text>
+          {isRequester ? (
+            <Pressable onPress={() => updateRequestStatus("cancelled")}>
+              <Ionicons name="trash-outline" size={22} color="#FFF" />
             </Pressable>
-            <Text style={styles.headerTitle}>Organ Request</Text>
-            {isRequester ? (
-              <Pressable onPress={() => updateRequestStatus("cancelled")}>
-                <Ionicons name="trash-outline" size={22} color="#FFF" />
-              </Pressable>
-            ) : <View style={{ width: 44 }} />}
-          </View>
-          
-          <View style={styles.urgencyBanner}>
-            <Text style={styles.urgencyTitle}>{request.urgency.toUpperCase()} NEED</Text>
-            <Text style={styles.urgencySub}>{request.organ_needed} for {request.patient_name}</Text>
-          </View>
-        </SafeAreaView>
+          ) : <View style={{ width: 44 }} />}
+        </View>
+        
+        <View style={styles.urgencyBanner}>
+          <Text style={styles.urgencyTitle}>{request.urgency.toUpperCase()} NEED</Text>
+          <Text style={styles.urgencySub}>{request.organ_needed} for {request.patient_name}</Text>
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>

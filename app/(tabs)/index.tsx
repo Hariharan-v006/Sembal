@@ -8,8 +8,8 @@ import {
   View,
   StyleSheet,
   Dimensions,
-  SafeAreaView,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { RequestCard } from "@/components/requests/RequestCard";
@@ -27,6 +27,7 @@ const { width } = Dimensions.get("window");
 
 export default function HomeScreen() {
   const profile = useAuthStore((s) => s.profile);
+  const insets = useSafeAreaInsets();
   const { coords, error: locError } = useLocation();
   const [sortModalOpen, setSortModalOpen] = useState(false);
   const {
@@ -87,58 +88,56 @@ export default function HomeScreen() {
       <StatusBar style="light" />
       
       {/* Header with Gradient */}
-      <View style={styles.headerContainer}>
+      <View style={[styles.headerContainer, { paddingTop: insets.top }]}>
         <LinearGradient
           colors={["#4A0000", "#8B1A1A", "#C0392B"]}
           style={StyleSheet.absoluteFill}
         />
-        <SafeAreaView>
-          <View style={styles.headerTop}>
-            <View>
-              <Text style={styles.welcomeText}>Hello, {profile?.full_name?.split(" ")[0] ?? "Donor"} 👋</Text>
-              <Text style={styles.locationText}>
-                {profile?.blood_group ?? "--"} • {profile?.city ?? "Unknown city"}
-              </Text>
-            </View>
-            <Pressable 
-              onPress={() => router.push("/notifications")}
-              style={styles.profileBadge}
-              hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-            >
-              <Ionicons name="notifications" size={24} color="#FFF" />
-              {notifications.some(n => !n.is_read) && <View style={styles.badgeDot} />}
-            </Pressable>
+        <View style={styles.headerTop}>
+          <View>
+            <Text style={styles.welcomeText}>Hello, {profile?.full_name?.split(" ")[0] ?? "Donor"} 👋</Text>
+            <Text style={styles.locationText}>
+              {profile?.blood_group ?? "--"} • {profile?.city ?? "Unknown city"}
+            </Text>
           </View>
+          <Pressable 
+            onPress={() => router.push("/notifications")}
+            style={styles.profileBadge}
+            hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+          >
+            <Ionicons name="notifications" size={24} color="#FFF" />
+            {notifications.some(n => !n.is_read) && <View style={styles.badgeDot} />}
+          </Pressable>
+        </View>
 
-          {/* Availability Alert */}
-          {!profile?.is_available && (
-            <Pressable 
-              onPress={() => router.push("/(tabs)/profile")} 
-              style={styles.availabilityAlert}
-            >
-              <Ionicons name="alert-circle" size={16} color="#FFF" />
-              <Text style={styles.availabilityText}>You are currently away. Tap to update.</Text>
-            </Pressable>
-          )}
+        {/* Availability Alert */}
+        {!profile?.is_available && (
+          <Pressable 
+            onPress={() => router.push("/(tabs)/profile")} 
+            style={styles.availabilityAlert}
+          >
+            <Ionicons name="alert-circle" size={16} color="#FFF" />
+            <Text style={styles.availabilityText}>You are currently away. Tap to update.</Text>
+          </Pressable>
+        )}
 
-          {/* Stats Bar */}
-          <View style={styles.statsBar}>
-            <View style={styles.statCard}>
-              <Text style={styles.statVal}>{stats.active}</Text>
-              <Text style={styles.statLabel}>Active</Text>
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.statCard}>
-              <Text style={styles.statVal}>{stats.nearby}</Text>
-              <Text style={styles.statLabel}>Nearby</Text>
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.statCard}>
-              <Text style={styles.statVal}>{stats.critical}</Text>
-              <Text style={styles.statLabel}>Critical</Text>
-            </View>
+        {/* Stats Bar */}
+        <View style={styles.statsBar}>
+          <View style={styles.statCard}>
+            <Text style={styles.statVal}>{stats.active}</Text>
+            <Text style={styles.statLabel}>Active</Text>
           </View>
-        </SafeAreaView>
+          <View style={styles.divider} />
+          <View style={styles.statCard}>
+            <Text style={styles.statVal}>{stats.nearby}</Text>
+            <Text style={styles.statLabel}>Nearby</Text>
+          </View>
+          <View style={styles.divider} />
+          <View style={styles.statCard}>
+            <Text style={styles.statVal}>{stats.critical}</Text>
+            <Text style={styles.statLabel}>Critical</Text>
+          </View>
+        </View>
       </View>
 
       {/* Main Feed */}

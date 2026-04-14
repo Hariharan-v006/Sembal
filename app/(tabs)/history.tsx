@@ -8,6 +8,7 @@ import {
   StyleSheet,
   SafeAreaView,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/stores/authStore";
@@ -24,6 +25,7 @@ interface DonationRecord {
 
 export default function HistoryScreen() {
   const profile = useAuthStore((s) => s.profile);
+  const insets = useSafeAreaInsets();
   const [records, setRecords] = useState<DonationRecord[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -75,31 +77,29 @@ export default function HistoryScreen() {
       <StatusBar style="light" />
       <LinearGradient
         colors={["#4A0000", "#8B1A1A", "#C0392B"]}
-        style={styles.header}
+        style={[styles.header, { paddingTop: insets.top }]}
       >
-        <SafeAreaView>
-          <View style={styles.headerTitleRow}>
-            <Text style={styles.title}>Your Impact</Text>
-            <Ionicons name="medal" size={24} color="#FFD700" />
+        <View style={styles.headerTitleRow}>
+          <Text style={styles.title}>Your Impact</Text>
+          <Ionicons name="medal" size={24} color="#FFD700" />
+        </View>
+        
+        <View style={styles.statsRow}>
+          <View style={styles.statBox}>
+            <Text style={styles.statVal}>{stats.total}</Text>
+            <Text style={styles.statLbl}>Donations</Text>
           </View>
-          
-          <View style={styles.statsRow}>
-            <View style={styles.statBox}>
-              <Text style={styles.statVal}>{stats.total}</Text>
-              <Text style={styles.statLbl}>Donations</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statBox}>
-              <Text style={styles.statVal}>{stats.lives}</Text>
-              <Text style={styles.statLbl}>Lives Impacted</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statBox}>
-              <Text style={styles.statVal} numberOfLines={1}>{stats.last === "Never" ? "---" : stats.last.split("-")[2] + "/" + stats.last.split("-")[1]}</Text>
-              <Text style={styles.statLbl}>Last Done</Text>
-            </View>
+          <View style={styles.statDivider} />
+          <View style={styles.statBox}>
+            <Text style={styles.statVal}>{stats.lives}</Text>
+            <Text style={styles.statLbl}>Lives Impacted</Text>
           </View>
-        </SafeAreaView>
+          <View style={styles.statDivider} />
+          <View style={styles.statBox}>
+            <Text style={styles.statVal} numberOfLines={1}>{stats.last === "Never" ? "---" : stats.last.split("-")[2] + "/" + stats.last.split("-")[1]}</Text>
+            <Text style={styles.statLbl}>Last Done</Text>
+          </View>
+        </View>
       </LinearGradient>
 
       <FlatList

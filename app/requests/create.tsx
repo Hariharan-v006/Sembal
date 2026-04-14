@@ -12,6 +12,7 @@ import {
   Platform,
   Dimensions,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 
 const { width } = Dimensions.get("window");
@@ -38,6 +39,7 @@ type FormValues = z.infer<typeof schema>;
 
 export default function CreateRequestScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const profile = useAuthStore((s) => s.profile);
   const { coords, getLocation } = useLocation();
   const [bloodGroup, setBloodGroup] = useState<(typeof BLOOD_GROUPS)[number]>("O+");
@@ -142,19 +144,20 @@ export default function CreateRequestScreen() {
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
-      <LinearGradient colors={["#4A0000", "#C0392B"]} style={styles.header}>
-        <SafeAreaView>
-          <View style={styles.headerContent}>
-            <Pressable onPress={() => router.back()} style={styles.backBtn}>
-              <Ionicons name="chevron-back" size={24} color="#FFF" />
-            </Pressable>
-            <View>
-              <Text style={styles.headerTitle}>New Request</Text>
-              <Text style={styles.headerSubtitle}>Broadcast to neighbors</Text>
-            </View>
-            <View style={{ width: 44 }} /> 
+      <LinearGradient 
+        colors={["#4A0000", "#C0392B"]} 
+        style={[styles.header, { paddingTop: insets.top + 10 }]}
+      >
+        <View style={styles.headerContent}>
+          <Pressable onPress={() => router.back()} style={styles.backBtn}>
+            <Ionicons name="chevron-back" size={24} color="#FFF" />
+          </Pressable>
+          <View>
+            <Text style={styles.headerTitle}>New Request</Text>
+            <Text style={styles.headerSubtitle}>Broadcast to neighbors</Text>
           </View>
-        </SafeAreaView>
+          <View style={{ width: 44 }} /> 
+        </View>
       </LinearGradient>
 
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.flex}>

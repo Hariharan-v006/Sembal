@@ -3,7 +3,7 @@ import { create } from "zustand";
 export interface AppNotification {
   id: string;
   user_id: string;
-  type: "blood_request" | "sos" | "response" | "system";
+  type: "blood_request" | "sos" | "response" | "system" | "organ_request" | "organ_response";
   title: string;
   body: string;
   data: Record<string, unknown> | null;

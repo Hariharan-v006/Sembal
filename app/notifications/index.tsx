@@ -8,6 +8,7 @@ import {
   StyleSheet,
   SafeAreaView,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppNotification, useNotificationStore } from "@/stores/notificationStore";
 import { useAuthStore } from "@/stores/authStore";
 import { supabase } from "@/lib/supabase";
@@ -45,6 +46,7 @@ const getDateLabel = (dateInput: string): string => {
 
 export default function NotificationsScreen() {
   const profile = useAuthStore((s) => s.profile);
+  const insets = useSafeAreaInsets();
   const { notifications, setNotifications, markAllAsRead, markAsRead, addNotification } = useNotificationStore();
   const [loading, setLoading] = useState(true);
 
@@ -119,21 +121,22 @@ export default function NotificationsScreen() {
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
-      <LinearGradient colors={["#1A1A1A", "#333"]} style={styles.header}>
-        <SafeAreaView>
-          <View style={styles.headerContent}>
-            <Pressable onPress={() => router.back()} style={styles.backBtn}>
-              <Ionicons name="chevron-back" size={24} color="#FFF" />
-            </Pressable>
-            <View style={styles.headerTextWrap}>
-              <Text style={styles.headerTitle}>Updates</Text>
-              <Text style={styles.headerSub}>{notifications.filter(n => !n.is_read).length} new alerts</Text>
-            </View>
-            <Pressable onPress={markAll} style={styles.markAllBtn}>
-              <Text style={styles.markAllText}>Mark all read</Text>
-            </Pressable>
+      <LinearGradient 
+        colors={["#1A1A1A", "#333"]} 
+        style={[styles.header, { paddingTop: insets.top + 10 }]}
+      >
+        <View style={styles.headerContent}>
+          <Pressable onPress={() => router.back()} style={styles.backBtn}>
+            <Ionicons name="chevron-back" size={24} color="#FFF" />
+          </Pressable>
+          <View style={styles.headerTextWrap}>
+            <Text style={styles.headerTitle}>Updates</Text>
+            <Text style={styles.headerSub}>{notifications.filter(n => !n.is_read).length} new alerts</Text>
           </View>
-        </SafeAreaView>
+          <Pressable onPress={markAll} style={styles.markAllBtn}>
+            <Text style={styles.markAllText}>Mark all read</Text>
+          </Pressable>
+        </View>
       </LinearGradient>
 
       <FlatList

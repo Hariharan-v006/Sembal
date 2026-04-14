@@ -12,6 +12,7 @@ import {
   Platform,
   ScrollView,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/stores/authStore";
@@ -25,6 +26,7 @@ const { width } = Dimensions.get("window");
 
 export default function SosScreen() {
   const profile = useAuthStore((s) => s.profile);
+  const insets = useSafeAreaInsets();
   const { coords, getLocation } = useLocation();
   const [hospital, setHospital] = useState("");
   const [selectedBloodGroup, setSelectedBloodGroup] = useState(profile?.blood_group || "O+");
@@ -127,7 +129,7 @@ export default function SosScreen() {
         style={StyleSheet.absoluteFill}
       />
       
-      <SafeAreaView style={styles.flex}>
+      <View style={[styles.flex, { paddingTop: insets.top }]}>
         <KeyboardAvoidingView 
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.flex}
@@ -228,7 +230,7 @@ export default function SosScreen() {
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
-      </SafeAreaView>
+      </View>
     </View>
   );
 }

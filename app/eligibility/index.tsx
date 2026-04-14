@@ -11,6 +11,7 @@ import {
   Dimensions,
   Animated,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/stores/authStore";
 import { Ionicons } from "@expo/vector-icons";
@@ -40,6 +41,7 @@ type FormState = {
 };
 
 export default function EligibilityScreen() {
+  const insets = useSafeAreaInsets();
   const profile = useAuthStore((s) => s.profile);
   const updateProfile = useAuthStore((s) => s.updateProfile);
   const [step, setStep] = useState(1);
@@ -152,7 +154,7 @@ export default function EligibilityScreen() {
     return (
       <View style={styles.container}>
         <StatusBar style="dark" />
-        <SafeAreaView style={styles.flex}>
+        <View style={[styles.flex, { paddingTop: insets.top }]}>
           <ScrollView contentContainerStyle={styles.resultContent}>
             <View style={[styles.resultHeader, isSuccess ? styles.bgGreen : isWarning ? styles.bgOrange : styles.bgRed]}>
               <Ionicons 
@@ -189,7 +191,7 @@ export default function EligibilityScreen() {
               </Pressable>
             </View>
           </ScrollView>
-        </SafeAreaView>
+        </View>
       </View>
     );
   }
@@ -197,7 +199,7 @@ export default function EligibilityScreen() {
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
-      <SafeAreaView style={styles.flex}>
+      <View style={[styles.flex, { paddingTop: insets.top }]}>
         <View style={styles.header}>
           <Pressable onPress={() => router.back()} style={styles.backBtn} hitSlop={15}>
             <Ionicons name="chevron-back" size={24} color="#1A1A1A" />
@@ -313,7 +315,7 @@ export default function EligibilityScreen() {
             )}
           </View>
         </ScrollView>
-      </SafeAreaView>
+      </View>
     </View>
   );
 }
@@ -357,6 +359,7 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 2,
   },
+  step: { width: "100%" },
   label: { fontSize: 20, fontWeight: "800", color: "#1A1A1A", textAlign: "center", marginBottom: 8 },
   subtext: { fontSize: 13, color: "#777", textAlign: "center", marginBottom: 24, lineHeight: 18 },
   input: {

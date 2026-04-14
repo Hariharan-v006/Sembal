@@ -5,9 +5,9 @@ import {
   View,
   StyleSheet,
   ScrollView,
-  SafeAreaView,
   ActivityIndicator,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { useAuthStore } from "@/stores/authStore";
 import { supabase } from "@/lib/supabase";
@@ -18,6 +18,7 @@ import { StatusBar } from "expo-status-bar";
 
 export default function ProfileScreen() {
   const { profile, updateProfile, logout } = useAuthStore();
+  const insets = useSafeAreaInsets();
   const [updatingAvailability, setUpdatingAvailability] = useState(false);
   const [requestCount, setRequestCount] = useState(0);
   const [helpedCount, setHelpedCount] = useState(0);
@@ -57,7 +58,7 @@ export default function ProfileScreen() {
         style={styles.headerBackground}
       />
       
-      <SafeAreaView style={styles.flex}>
+      <View style={[styles.flex, { paddingTop: insets.top }]}>
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {/* Profile Header */}
           <View style={styles.profileCard}>
@@ -145,7 +146,7 @@ export default function ProfileScreen() {
             <Text style={styles.signOutText}>Sign Out of My Account</Text>
           </Pressable>
         </ScrollView>
-      </SafeAreaView>
+      </View>
     </View>
   );
 }

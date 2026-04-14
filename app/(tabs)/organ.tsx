@@ -14,6 +14,7 @@ import {
   TextInput,
   Dimensions,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ORGANS, COLORS } from "@/constants/theme";
 import { supabase } from "@/lib/supabase";
 import { useAuthStore } from "@/stores/authStore";
@@ -30,6 +31,7 @@ const { width } = Dimensions.get("window");
 
 export default function OrganHubScreen() {
   const profile = useAuthStore((s) => s.profile);
+  const insets = useSafeAreaInsets();
   const { 
     organRequests, 
     setOrganRequests, 
@@ -227,7 +229,7 @@ export default function OrganHubScreen() {
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
-      <SafeAreaView style={styles.flex}>
+      <View style={[styles.flex, { paddingTop: insets.top }]}>
         <View style={styles.switcher}>
           <Pressable 
             onPress={() => setActiveSegment("requests")}
@@ -463,7 +465,7 @@ export default function OrganHubScreen() {
             </View>
           </View>
         </Modal>
-      </SafeAreaView>
+      </View>
     </View>
   );
 }
