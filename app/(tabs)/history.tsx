@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
   FlatList,
   Pressable,
@@ -15,6 +15,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { StatusBar } from "expo-status-bar";
+import { useFocusEffect } from "expo-router";
 
 interface DonationRecord {
   id: string;
@@ -43,9 +44,11 @@ export default function HistoryScreen() {
       });
   }, [profile?.id]);
 
-  useEffect(() => {
-    fetchRecords();
-  }, [fetchRecords]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchRecords();
+    }, [fetchRecords])
+  );
 
   const stats = useMemo(() => {
     const totalUnits = records.reduce((sum, row) => sum + row.units_donated, 0);

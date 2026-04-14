@@ -54,22 +54,28 @@ export default function RequestDetails() {
 
   const accept = async () => {
     if (!profile?.id || !request) return;
-    const { error } = await supabase.from("donor_responses").upsert({
+    const { error: responseError } = await supabase.from("donor_responses").upsert({
       request_id: request.id,
       donor_id: profile.id,
       status: "accepted",
       responded_at: new Date().toISOString(),
-    });
-    if (error) return Alert.alert("Unable to accept", error.message);
+    }, { onConflict: 'request_id,donor_id' });
+    
+    if (responseError) return Alert.alert("Unable to accept", responseError.message);
 
     // Also insert into donation_records to update history & count
-    await supabase.from("donation_records").insert({
+    const { error: donationError } = await supabase.from("donation_records").insert({
       donor_id: profile.id,
       request_id: request.id,
       hospital_name: request.hospital_name,
       donation_date: new Date().toISOString().split('T')[0],
       units_donated: 1 // Default to 1 unit
     });
+
+    if (donationError) {
+      console.error("Donation record error:", donationError.message);
+      // We don't block the whole process, but notify them
+    }
     try {
       await invokeEdgeFunction("notify-donor-accepted", { request_id: request.id, donor_id: profile.id });
     } catch (edgeError) {

@@ -11,7 +11,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { useAuthStore } from "@/stores/authStore";
 import { supabase } from "@/lib/supabase";
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
+import { useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { StatusBar } from "expo-status-bar";
@@ -23,16 +24,18 @@ export default function ProfileScreen() {
   const [requestCount, setRequestCount] = useState(0);
   const [donationCount, setDonationCount] = useState(0);
 
-  useEffect(() => {
-    if (!profile?.id) return;
-    Promise.all([
-      supabase.from("blood_requests").select("id", { count: "exact", head: true }).eq("requester_id", profile.id),
-      supabase.from("donation_records").select("id", { count: "exact", head: true }).eq("donor_id", profile.id),
-    ]).then(([{ count: req }, { count: don }]) => {
-      setRequestCount(req ?? 0);
-      setDonationCount(don ?? 0);
-    });
-  }, [profile?.id]);
+  useFocusEffect(
+    useCallback(() => {
+      if (!profile?.id) return;
+      Promise.all([
+        supabase.from("blood_requests").select("id", { count: "exact", head: true }).eq("requester_id", profile.id),
+        supabase.from("donation_records").select("id", { count: "exact", head: true }).eq("donor_id", profile.id),
+      ]).then(([{ count: req }, { count: don }]) => {
+        setRequestCount(req ?? 0);
+        setDonationCount(don ?? 0);
+      });
+    }, [profile?.id])
+  );
 
   const toggleAvailable = async () => {
     if (!profile) return;
