@@ -70,7 +70,7 @@ export default function RootLayout() {
           <View style={styles.indicatorWrap}>
             <ActivityIndicator size="large" color="white" />
           </View>
-          <Text style={styles.logoText}>sembal</Text>
+          <Text style={styles.logoText}>SEMBAL</Text>
           <Text style={styles.sloganText}>Blood Response Network</Text>
         </View>
       </View>

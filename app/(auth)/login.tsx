@@ -84,7 +84,7 @@ export default function LoginScreen() {
               <View style={styles.logoWrap}>
                 <Ionicons name="water" size={44} color="white" />
               </View>
-              <Text style={styles.brand}>sembal</Text>
+              <Text style={styles.brand}>SEMBAL</Text>
               <Text style={styles.tagline}>Blood Response Network</Text>
             </View>
 

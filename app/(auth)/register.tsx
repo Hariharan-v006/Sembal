@@ -182,7 +182,7 @@ export default function RegisterScreen() {
                 </Pressable>
               </Link>
               <View>
-                <Text style={styles.brand}>Join Sembal</Text>
+                <Text style={styles.brand}>Join SEMBAL</Text>
                 <Text style={styles.tagline}>Create your blood donor account</Text>
               </View>
             </View>
