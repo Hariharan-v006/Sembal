@@ -9,11 +9,11 @@ export default function TabsLayout() {
         tabBarActiveTintColor: "#C0392B",
         tabBarInactiveTintColor: "#AAAAAA",
         tabBarStyle: { 
-          height: Platform.OS === 'ios' ? 88 : 68, 
+          height: Platform.OS === 'ios' ? 92 : 75, 
           borderTopColor: "#F0F0F0",
           backgroundColor: "#FFFFFF",
-          paddingBottom: Platform.OS === 'ios' ? 30 : 12,
-          paddingTop: 8,
+          paddingBottom: Platform.OS === 'ios' ? 30 : 15,
+          paddingTop: 10,
           shadowColor: "#000",
           shadowOffset: { width: 0, height: -4 },
           shadowOpacity: 0.05,
@@ -21,7 +21,7 @@ export default function TabsLayout() {
           elevation: 10,
         },
         tabBarLabelStyle: {
-          fontSize: 10,
+          fontSize: 11,
           fontWeight: "700",
           marginTop: 2,
         },
@@ -47,7 +47,7 @@ export default function TabsLayout() {
           title: "Home",
           headerShown: false,
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? "home" : "home-outline"} size={22} color={color} />
+            <Ionicons name={focused ? "home" : "home-outline"} size={26} color={color} />
           ),
         }}
       />
@@ -58,7 +58,7 @@ export default function TabsLayout() {
           title: "SOS",
           headerShown: false,
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? "alert-circle" : "alert-circle-outline"} size={22} color={color} />
+            <Ionicons name={focused ? "alert-circle" : "alert-circle-outline"} size={26} color={color} />
           ),
         }}
       />
@@ -69,7 +69,7 @@ export default function TabsLayout() {
           title: "History",
           headerShown: false,
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? "time" : "time-outline"} size={22} color={color} />
+            <Ionicons name={focused ? "time" : "time-outline"} size={26} color={color} />
           ),
         }}
       />
@@ -80,7 +80,7 @@ export default function TabsLayout() {
           title: "Profile",
           headerShown: false,
           tabBarIcon: ({ color, focused }) => (
-            <Ionicons name={focused ? "person" : "person-outline"} size={22} color={color} />
+            <Ionicons name={focused ? "person" : "person-outline"} size={26} color={color} />
           ),
         }}
       />
