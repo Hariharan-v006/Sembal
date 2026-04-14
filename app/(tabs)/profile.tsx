@@ -21,7 +21,6 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const [updatingAvailability, setUpdatingAvailability] = useState(false);
   const [requestCount, setRequestCount] = useState(0);
-  const [helpedCount, setHelpedCount] = useState(0);
   const [donationCount, setDonationCount] = useState(0);
 
   useEffect(() => {
@@ -29,11 +28,9 @@ export default function ProfileScreen() {
     Promise.all([
       supabase.from("blood_requests").select("id", { count: "exact", head: true }).eq("requester_id", profile.id),
       supabase.from("donation_records").select("id", { count: "exact", head: true }).eq("donor_id", profile.id),
-      supabase.from("donor_responses").select("id", { count: "exact", head: true }).eq("donor_id", profile.id).eq("status", "completed"),
-    ]).then(([{ count: req }, { count: don }, { count: help }]) => {
+    ]).then(([{ count: req }, { count: don }]) => {
       setRequestCount(req ?? 0);
       setDonationCount(don ?? 0);
-      setHelpedCount(help ?? 0);
     });
   }, [profile?.id]);
 
@@ -111,10 +108,6 @@ export default function ProfileScreen() {
             <View style={styles.statBox}>
               <Text style={styles.statVal}>{requestCount}</Text>
               <Text style={styles.statLbl}>Requests</Text>
-            </View>
-            <View style={styles.statBox}>
-              <Text style={styles.statVal}>{helpedCount}</Text>
-              <Text style={styles.statLbl}>Impacted</Text>
             </View>
           </View>
 
