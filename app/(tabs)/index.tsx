@@ -200,7 +200,10 @@ export default function HomeScreen() {
           colors={["#E74C3C", "#C0392B"]}
           style={styles.fabGradient}
         >
-          <Ionicons name="add" size={30} color="#FFF" />
+          <Text style={styles.fabText}>Create request</Text>
+          <View style={styles.fabIconCircle}>
+            <Ionicons name="add" size={20} color="#C0392B" />
+          </View>
         </LinearGradient>
       </Pressable>
 
@@ -430,20 +433,40 @@ const styles = StyleSheet.create({
   fab: {
     position: "absolute",
     bottom: 30,
-    right: 30,
+    right: 24,
     borderRadius: 28,
     shadowColor: "#C0392B",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.4,
     shadowRadius: 10,
-    elevation: 10,
+    elevation: 8,
   },
   fabGradient: {
-    width: 56,
-    height: 56,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     borderRadius: 28,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  fabText: {
+    color: "#FFF",
+    fontSize: 14,
+    fontWeight: "900",
+    marginLeft: 4,
+  },
+  fabIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#FFF",
     alignItems: "center",
     justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
   },
   modalOverlay: {
     flex: 1,
