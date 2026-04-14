@@ -54,7 +54,6 @@ export default function HistoryScreen() {
     const totalUnits = records.reduce((sum, row) => sum + row.units_donated, 0);
     return {
       total: records.length,
-      lives: totalUnits * 3,
       last: records[0]?.donation_date ?? "Never",
     };
   }, [records]);
@@ -91,11 +90,6 @@ export default function HistoryScreen() {
           <View style={styles.statBox}>
             <Text style={styles.statVal}>{stats.total}</Text>
             <Text style={styles.statLbl}>Donations</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.statBox}>
-            <Text style={styles.statVal}>{stats.lives}</Text>
-            <Text style={styles.statLbl}>Lives Impacted</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statBox}>
