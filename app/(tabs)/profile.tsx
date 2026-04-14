@@ -134,6 +134,17 @@ export default function ProfileScreen() {
             <Ionicons name="chevron-forward" size={18} color="#CCC" />
           </Pressable>
 
+          <Pressable style={styles.actionItem} onPress={() => router.push("/my-requests")}>
+            <View style={[styles.iconWrap, { backgroundColor: "#FDF2F2" }]}>
+              <Ionicons name="journal" size={20} color="#C0392B" />
+            </View>
+            <View style={styles.actionContent}>
+              <Text style={styles.actionTitle}>My Requests</Text>
+              <Text style={styles.actionSub}>Track and manage your appeals</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color="#CCC" />
+          </Pressable>
+
           {/* Sign Out */}
           <Pressable 
             style={styles.signOutBtn} 
