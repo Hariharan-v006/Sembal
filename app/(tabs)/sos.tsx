@@ -10,6 +10,7 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { supabase } from "@/lib/supabase";
@@ -18,16 +19,25 @@ import { useLocation } from "@/hooks/useLocation";
 import { invokeEdgeFunction } from "@/lib/edgeFunctions";
 import { Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
+import { BLOOD_GROUPS } from "@/constants/theme";
 
 const { width } = Dimensions.get("window");
 
 export default function SosScreen() {
   const profile = useAuthStore((s) => s.profile);
-  const { coords } = useLocation();
+  const { coords, getLocation } = useLocation();
   const [hospital, setHospital] = useState("");
+  const [selectedBloodGroup, setSelectedBloodGroup] = useState(profile?.blood_group || "O+");
   const [cooldownUntil, setCooldownUntil] = useState<Date | null>(null);
   const [sentCount, setSentCount] = useState<number | null>(null);
   const [nowTick, setNowTick] = useState(Date.now());
+  const [isTriggering, setIsTriggering] = useState(false);
+
+  useEffect(() => {
+    if (profile?.blood_group) {
+      setSelectedBloodGroup(profile.blood_group);
+    }
+  }, [profile?.blood_group]);
 
   useEffect(() => {
     if (!profile?.id) return;
@@ -56,18 +66,29 @@ export default function SosScreen() {
   }, []);
 
   const trigger = async () => {
-    if (!profile?.id || !coords) return;
+    if (!profile?.id) return;
     if (!hospital) {
-      return Alert.alert("Required", "Please enter the hospital name where blood is needed.");
+      return Alert.alert("Required", "Please enter the hospital name.");
     }
     
+    setIsTriggering(true);
+    let currentCoords = coords;
+    if (!currentCoords) {
+      currentCoords = await getLocation();
+    }
+
+    if (!currentCoords) {
+      setIsTriggering(false);
+      return Alert.alert("Location Required", "Unable to get your GPS location for the emergency alert.");
+    }
+
     const { data, error } = await supabase
       .from("sos_alerts")
       .insert({
         requester_id: profile.id,
-        blood_group: profile.blood_group,
-        latitude: coords.latitude,
-        longitude: coords.longitude,
+        blood_group: selectedBloodGroup,
+        latitude: currentCoords.latitude,
+        longitude: currentCoords.longitude,
         hospital_name: hospital,
         contact_number: profile.phone ?? "",
         radius_km: 30,
@@ -75,13 +96,18 @@ export default function SosScreen() {
       .select("created_at, donors_notified")
       .single();
 
-    if (error) return Alert.alert("Error", error.message);
+    if (error) {
+      setIsTriggering(false);
+      return Alert.alert("Error", error.message);
+    }
     
     try {
       await invokeEdgeFunction("notify-sos-nearby", {
-        blood_group: profile.blood_group,
-        latitude: coords.latitude,
-        longitude: coords.longitude,
+        blood_group: selectedBloodGroup,
+        latitude: currentCoords.latitude,
+        longitude: currentCoords.longitude,
+        hospital_name: hospital,
+        request_id: profile.id, // Using profile.id as a fallback or the actual alert id if needed
       });
     } catch (edgeError) {
       console.error("SOS Notify edge function failed:", edgeError);
@@ -89,7 +115,8 @@ export default function SosScreen() {
     
     setSentCount(data?.donors_notified ?? 0);
     setCooldownUntil(new Date(new Date(data.created_at).getTime() + 60 * 60 * 1000));
-    Alert.alert("SOS Triggered", `Alert broadcasted to nearby donors.`);
+    setIsTriggering(false);
+    Alert.alert("SOS Triggered", `Emergency alert broadcasted to nearby donors.`);
   };
 
   return (
@@ -100,79 +127,106 @@ export default function SosScreen() {
         style={StyleSheet.absoluteFill}
       />
       
-      {/* Background Decorative Rings */}
-      <View style={styles.ring1} />
-      <View style={styles.ring2} />
-
       <SafeAreaView style={styles.flex}>
         <KeyboardAvoidingView 
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.flex}
         >
-          <View style={styles.content}>
-            <View style={styles.iconHeader}>
-              <Ionicons name="warning" size={40} color="#E74C3C" />
+          <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            <View style={styles.header}>
+              <View style={styles.iconHeader}>
+                <Ionicons name="warning" size={32} color="#E74C3C" />
+              </View>
+              <Text style={styles.title}>Emergency SOS</Text>
+              <Text style={styles.subtitle}>
+                Broadcast an urgent blood need to all active donors within 30km.
+              </Text>
             </View>
-            <Text style={styles.title}>Emergency SOS</Text>
-            <Text style={styles.subtitle}>
-              Broadcast an urgent blood need to all active donors within 30km.
-            </Text>
 
-            <View style={styles.inputCard}>
-              <Text style={styles.label}>HOSPITAL / LOCATION</Text>
-              <View style={styles.inputWrap}>
-                <Ionicons name="business" size={20} color="#888" />
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="e.g. City General Hospital"
-                  placeholderTextColor="#666"
-                  value={hospital}
-                  onChangeText={setHospital}
-                  autoFocus={false}
-                />
+            <View style={styles.formCard}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>HOSPITAL / LOCATION</Text>
+                <View style={styles.inputWrap}>
+                  <Ionicons name="business" size={20} color="#E74C3C" />
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="e.g. City General Hospital"
+                    placeholderTextColor="#666"
+                    value={hospital}
+                    onChangeText={setHospital}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>BLOOD GROUP NEEDED</Text>
+                <View style={styles.bloodGrid}>
+                  {BLOOD_GROUPS.map((g) => (
+                    <Pressable
+                      key={g}
+                      style={[
+                        styles.bloodChip,
+                        selectedBloodGroup === g && styles.bloodChipActive
+                      ]}
+                      onPress={() => setSelectedBloodGroup(g)}
+                    >
+                      <Text style={[
+                        styles.bloodText,
+                        selectedBloodGroup === g && styles.bloodTextActive
+                      ]}>{g}</Text>
+                    </Pressable>
+                  ))}
+                </View>
               </View>
             </View>
 
             <View style={styles.buttonSection}>
-              <Pressable
-                onPress={trigger}
-                disabled={cooldownRemaining > 0}
-                style={({ pressed }) => [
-                  styles.sosButtonOuter,
-                  pressed && styles.sosPressed,
-                  cooldownRemaining > 0 && styles.sosDisabled,
-                ]}
-              >
-                <LinearGradient
-                  colors={cooldownRemaining > 0 ? ["#444", "#222"] : ["#E74C3C", "#C0392B"]}
-                  style={styles.sosButtonInner}
+              <View style={styles.sphereContainer}>
+                <Pressable
+                  onPress={trigger}
+                  disabled={cooldownRemaining > 0 || isTriggering}
+                  style={({ pressed }) => [
+                    styles.sosSphere,
+                    pressed && styles.sosPressed,
+                    (cooldownRemaining > 0 || isTriggering) && styles.sosDisabled,
+                  ]}
                 >
-                  <Text style={styles.sosLabel}>SOS</Text>
-                  {cooldownRemaining > 0 && (
-                    <View style={styles.timerWrap}>
-                      <Ionicons name="time-outline" size={14} color="#FFAAAA" />
-                      <Text style={styles.timerText}>
-                        {Math.floor(cooldownRemaining / 60)}:{String(cooldownRemaining % 60).padStart(2, "0")}
-                      </Text>
-                    </View>
-                  )}
-                </LinearGradient>
-              </Pressable>
+                  <LinearGradient
+                    colors={cooldownRemaining > 0 ? ["#444", "#222"] : ["#FF4D4D", "#C0392B"]}
+                    style={styles.sphereGradient}
+                  >
+                    <Text style={styles.sosLabel}>
+                      {isTriggering ? "..." : "SOS"}
+                    </Text>
+                    {cooldownRemaining > 0 && (
+                      <View style={styles.timerWrap}>
+                        <Text style={styles.timerText}>
+                          {Math.floor(cooldownRemaining / 60)}:{String(cooldownRemaining % 60).padStart(2, "0")}
+                        </Text>
+                      </View>
+                    )}
+                  </LinearGradient>
+                </Pressable>
+                
+                {/* Visual depth rings */}
+                <View style={[styles.ring, styles.ringOuter]} />
+                <View style={[styles.ring, styles.ringMid]} />
+              </View>
               
               <Text style={styles.warningHint}>
                 {cooldownRemaining > 0 
                   ? "Broadcast on cooldown" 
-                  : "Tap and hold to trigger emergency alert"}
+                  : "Tap to trigger instant broadcast"}
               </Text>
-            </View>
 
-            {typeof sentCount === "number" && (
-              <View style={styles.successFlash}>
-                <Ionicons name="checkmark-circle" size={18} color="#2ECC71" />
-                <Text style={styles.successText}>{sentCount} donors notified in your area</Text>
-              </View>
-            )}
-          </View>
+              {typeof sentCount === "number" && (
+                <View style={styles.successFlash}>
+                  <Ionicons name="checkmark-circle" size={18} color="#2ECC71" />
+                  <Text style={styles.successText}>{sentCount} donors notified</Text>
+                </View>
+              )}
+            </View>
+          </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </View>
@@ -180,74 +234,51 @@ export default function SosScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#1A0A0A",
-  },
+  container: { flex: 1, backgroundColor: "#1A0A0A" },
   flex: { flex: 1 },
-  ring1: {
-    position: "absolute",
-    width: 400,
-    height: 400,
-    borderRadius: 200,
-    borderWidth: 1,
-    borderColor: "rgba(231, 76, 60, 0.05)",
-    top: "30%",
-    left: -100,
-  },
-  ring2: {
-    position: "absolute",
-    width: 600,
-    height: 600,
-    borderRadius: 300,
-    borderWidth: 1,
-    borderColor: "rgba(231, 76, 60, 0.03)",
-    top: "10%",
-    right: -200,
-  },
-  content: {
-    flex: 1,
+  scrollContent: { paddingBottom: 60 },
+  header: {
     alignItems: "center",
-    justifyContent: "center",
+    marginTop: 20,
     paddingHorizontal: 30,
   },
   iconHeader: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: "rgba(231, 76, 60, 0.1)",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 20,
+    marginBottom: 16,
     borderWidth: 1,
-    borderColor: "rgba(231, 76, 60, 0.2)",
+    borderColor: "rgba(231, 76, 60, 0.3)",
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: "900",
     color: "#FFFFFF",
     textAlign: "center",
   },
   subtitle: {
-    fontSize: 15,
+    fontSize: 14,
     color: "rgba(255,255,255,0.6)",
     textAlign: "center",
-    marginTop: 10,
-    lineHeight: 22,
+    marginTop: 8,
+    lineHeight: 20,
   },
-  inputCard: {
-    width: "100%",
+  formCard: {
+    margin: 20,
+    padding: 24,
     backgroundColor: "rgba(255,255,255,0.05)",
-    borderRadius: 20,
-    padding: 20,
-    marginTop: 40,
+    borderRadius: 24,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.1)",
   },
+  inputGroup: { marginBottom: 20 },
   label: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: "800",
-    color: "rgba(255,255,255,0.4)",
+    color: "#E74C3C",
     letterSpacing: 1,
     marginBottom: 12,
   },
@@ -255,10 +286,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    height: 50,
-    backgroundColor: "rgba(0,0,0,0.2)",
-    borderRadius: 14,
+    height: 54,
+    backgroundColor: "rgba(0,0,0,0.3)",
+    borderRadius: 16,
     paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.05)",
   },
   textInput: {
     flex: 1,
@@ -266,63 +299,110 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   },
-  buttonSection: {
-    marginTop: 50,
+  bloodGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  bloodChip: {
+    width: (width - 108) / 4,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.05)",
     alignItems: "center",
-  },
-  sosButtonOuter: {
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    padding: 10,
-    backgroundColor: "rgba(231, 76, 60, 0.1)",
+    justifyContent: "center",
     borderWidth: 1,
-    borderColor: "rgba(231, 76, 60, 0.2)",
+    borderColor: "rgba(255,255,255,0.1)",
   },
-  sosButtonInner: {
-    flex: 1,
+  bloodChipActive: {
+    backgroundColor: "#E74C3C",
+    borderColor: "#FF4D4D",
+  },
+  bloodText: {
+    fontSize: 14,
+    fontWeight: "800",
+    color: "#AAA",
+  },
+  bloodTextActive: {
+    color: "#FFF",
+  },
+  buttonSection: {
+    alignItems: "center",
+    marginTop: 10,
+  },
+  sphereContainer: {
+    width: 220,
+    height: 220,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  sosSphere: {
+    width: 180,
+    height: 180,
+    borderRadius: 90,
+    overflow: "hidden",
+    zIndex: 10,
+    elevation: 12,
+    shadowColor: "#E74C3C",
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.5,
+    shadowRadius: 15,
+  },
+  sphereGradient: {
+    width: 180,
+    height: 180,
     borderRadius: 90,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#E74C3C",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    elevation: 15,
   },
   sosLabel: {
-    fontSize: 44,
+    fontSize: 48,
     fontWeight: "900",
     color: "#FFFFFF",
-    letterSpacing: -1,
+    letterSpacing: -2,
   },
   sosPressed: {
-    opacity: 0.8,
-    transform: [{ scale: 0.95 }],
+    transform: [{ scale: 0.9 }],
   },
   sosDisabled: {
-    opacity: 0.6,
+    opacity: 0.8,
   },
   timerWrap: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
     marginTop: 4,
+    backgroundColor: "rgba(0,0,0,0.3)",
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
   timerText: {
-    color: "#FFAAAA",
+    color: "#FFF",
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: "900",
+  },
+  ring: {
+    position: "absolute",
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "rgba(231, 76, 60, 0.2)",
+  },
+  ringOuter: {
+    width: 240,
+    height: 240,
+    borderColor: "rgba(231, 76, 60, 0.05)",
+  },
+  ringMid: {
+    width: 210,
+    height: 210,
+    borderColor: "rgba(231, 76, 60, 0.1)",
   },
   warningHint: {
     marginTop: 20,
     fontSize: 13,
     color: "rgba(255,255,255,0.4)",
-    fontWeight: "500",
+    fontWeight: "600",
   },
   successFlash: {
-    position: "absolute",
-    bottom: 40,
+    marginTop: 20,
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "rgba(46, 204, 113, 0.1)",
@@ -331,11 +411,11 @@ const styles = StyleSheet.create({
     borderRadius: 99,
     borderWidth: 1,
     borderColor: "rgba(46, 204, 113, 0.2)",
-    gap: 10,
+    gap: 8,
   },
   successText: {
     color: "#2ECC71",
     fontSize: 13,
-    fontWeight: "700",
+    fontWeight: "800",
   },
 });

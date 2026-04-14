@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import { View, StyleSheet, Platform } from "react-native";
-import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 export default function TabsLayout() {
   return (
@@ -46,7 +45,7 @@ export default function TabsLayout() {
         name="index"
         options={{
           title: "Home",
-          headerShown: false, // Dashboard has its own custom deep header
+          headerShown: false,
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name={focused ? "home" : "home-outline"} size={22} color={color} />
           ),
@@ -58,12 +57,8 @@ export default function TabsLayout() {
         options={{
           title: "SOS",
           headerShown: false,
-          tabBarIcon: () => (
-            <View style={styles.sosContainer}>
-              <View style={styles.sosInner}>
-                <Ionicons name="alert-circle" size={28} color="#fff" />
-              </View>
-            </View>
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? "alert-circle" : "alert-circle-outline"} size={22} color={color} />
           ),
         }}
       />
@@ -72,7 +67,7 @@ export default function TabsLayout() {
         name="history"
         options={{
           title: "History",
-          headerShown: false, // History now has a custom gradient header too
+          headerShown: false,
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name={focused ? "time" : "time-outline"} size={22} color={color} />
           ),
@@ -83,7 +78,7 @@ export default function TabsLayout() {
         name="profile"
         options={{
           title: "Profile",
-          headerShown: false, // Profile has its own header
+          headerShown: false,
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name={focused ? "person" : "person-outline"} size={22} color={color} />
           ),
@@ -93,27 +88,4 @@ export default function TabsLayout() {
   );
 }
 
-const styles = StyleSheet.create({
-  sosContainer: {
-    top: -16,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "#FFFFFF",
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: "#C0392B",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  sosInner: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "#C0392B",
-    alignItems: "center",
-    justifyContent: "center",
-  }
-});
+const styles = StyleSheet.create({});
