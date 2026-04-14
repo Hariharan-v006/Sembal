@@ -47,17 +47,26 @@ export default function NotificationsScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
     if (!profile?.id) return;
     
     const fetchInitial = async () => {
-      const { data } = await supabase
-        .from("notifications")
-        .select("*")
-        .eq("user_id", profile.id)
-        .order("created_at", { ascending: false });
-      
-      setNotifications((data as AppNotification[]) ?? []);
-      setLoading(false);
+      try {
+        const { data, error } = await supabase
+          .from("notifications")
+          .select("*")
+          .eq("user_id", profile.id)
+          .order("created_at", { ascending: false });
+        
+        if (isMounted) {
+          if (error) console.error("Notifications fetch error:", error);
+          setNotifications((data as AppNotification[]) ?? []);
+        }
+      } catch (err) {
+        console.error("Notifications query failed:", err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
     };
 
     fetchInitial();
@@ -68,15 +77,16 @@ export default function NotificationsScreen() {
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${profile.id}` },
         (payload) => {
-          addNotification(payload.new as AppNotification);
+          if (isMounted) addNotification(payload.new as AppNotification);
         }
       )
       .subscribe();
 
     return () => {
+      isMounted = false;
       supabase.removeChannel(channel);
     };
-  }, [addNotification, profile?.id, setNotifications]);
+  }, [profile?.id]); // Only re-run if profile switches
 
   const markAll = async () => {
     if (!profile?.id) return;
