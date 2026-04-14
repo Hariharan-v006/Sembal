@@ -27,6 +27,8 @@ const themeByType: Record<
   blood_request: { name: "water", color: "#3498DB", bg: "#EBF5FB" },
   sos: { name: "alert-circle", color: "#C0392B", bg: "#FDEDEC" },
   response: { name: "checkmark-circle", color: "#27AE60", bg: "#E9F7EF" },
+  organ_request: { name: "heart", color: "#8E44AD", bg: "#F3E8FF" },
+  organ_response: { name: "checkmark-circle-outline", color: "#8E44AD", bg: "#F3E8FF" },
   system: { name: "information-circle", color: "#8E44AD", bg: "#F5EEF8" },
 };
 
@@ -163,8 +165,15 @@ export default function NotificationsScreen() {
               onPress={async () => {
                 markAsRead(notification.id);
                 await supabase.from("notifications").update({ is_read: true }).eq("id", notification.id);
-                const requestId = (notification.data as { request_id?: string } | null)?.request_id;
-                if (requestId) router.push(`/requests/${requestId}`);
+                
+                const data = notification.data as Record<string, any> | null;
+                if (notification.type === "organ_request" || notification.type === "organ_response") {
+                  const organId = data?.organ_request_id || data?.id;
+                  if (organId) router.push(`/organ/${organId}`);
+                } else {
+                  const requestId = data?.request_id;
+                  if (requestId) router.push(`/requests/${requestId}`);
+                }
               }}
             >
               <View style={styles.cardContent}>

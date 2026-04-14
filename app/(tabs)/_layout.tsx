@@ -21,7 +21,7 @@ export default function TabsLayout() {
           elevation: 10,
         },
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: 10,
           fontWeight: "700",
           marginTop: 2,
         },
@@ -70,6 +70,17 @@ export default function TabsLayout() {
           headerShown: false,
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name={focused ? "time" : "time-outline"} size={26} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="organ"
+        options={{
+          title: "Organ",
+          headerShown: false,
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? "heart" : "heart-outline"} size={26} color={color} />
           ),
         }}
       />

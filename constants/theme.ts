@@ -16,6 +16,10 @@ export const COLORS = {
   notEligible: "#C0392B",
   tabActive: "#C0392B",
   tabInactive: "#AAAAAA",
+  organ: "#8E44AD",
+  organDark: "#6C3483",
+  organLight: "#9B59B6",
+  organSurface: "#F3E8FF",
 };
 
 export const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"] as const;

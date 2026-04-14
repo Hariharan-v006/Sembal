@@ -133,17 +133,6 @@ export default function ProfileScreen() {
             <Ionicons name="chevron-forward" size={18} color="#CCC" />
           </Pressable>
 
-          <Pressable style={styles.actionItem} onPress={() => router.push("/organ-donation")}>
-            <View style={[styles.iconWrap, { backgroundColor: "#FFF3E0" }]}>
-              <Ionicons name="heart" size={20} color="#FF9800" />
-            </View>
-            <View style={styles.actionContent}>
-              <Text style={styles.actionTitle}>Organ Donation</Text>
-              <Text style={styles.actionSub}>Become a life-long hero</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color="#CCC" />
-          </Pressable>
-
           {/* Sign Out */}
           <Pressable 
             style={styles.signOutBtn} 

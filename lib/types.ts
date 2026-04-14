@@ -46,3 +46,41 @@ export interface BloodRequest {
   requester?: Profile;
   distance?: number;
 }
+
+export type OrganRequestStatus = 'open' | 'matched' | 'fulfilled' | 'cancelled' | 'expired';
+export type OrganUrgency = 'planned' | 'urgent' | 'critical';
+
+export interface OrganRequest {
+  id: string;
+  requester_id: string;
+  patient_name: string;
+  patient_age: number | null;
+  patient_gender: 'male' | 'female' | 'other' | null;
+  organ_needed: string;
+  blood_group_needed: BloodGroup;
+  hospital_name: string;
+  hospital_address: string;
+  contact_number: string;
+  medical_notes: string | null;
+  latitude: number;
+  longitude: number;
+  urgency: OrganUrgency;
+  status: OrganRequestStatus;
+  deadline: string | null;
+  created_at: string;
+  updated_at: string;
+  requester?: Profile;
+  distance?: number;
+}
+
+export interface OrganDonorResponse {
+  id: string;
+  request_id: string;
+  donor_id: string;
+  status: ResponseStatus;
+  message: string | null;
+  responded_at: string;
+  created_at: string;
+  request?: OrganRequest;
+  donor?: Profile;
+}
