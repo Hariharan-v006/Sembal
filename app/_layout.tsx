@@ -1,5 +1,4 @@
-import "../global.css";
-import { ActivityIndicator, Text, View } from "react-native";
+import { ActivityIndicator, Text, View, StyleSheet } from "react-native";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
@@ -13,6 +12,8 @@ export default function RootLayout() {
   const segments = useSegments();
   const { setSession, setUser, setProfile, session } = useAuthStore();
   const [loading, setLoading] = useState(true);
+  
+  // Initialize notifications gracefully (wrapped in try-catch internally)
   useNotifications();
 
   useEffect(() => {
@@ -21,22 +22,32 @@ export default function RootLayout() {
       setSession(data.session);
       setUser(data.session?.user ?? null);
       if (data.session?.user) {
-        const { data: profile } = await supabase.from("profiles").select("*").eq("id", data.session.user.id).single();
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", data.session.user.id)
+          .single();
         setProfile(profile);
       }
       setLoading(false);
     };
     bootstrap();
+
     const { data: authListener } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
       setSession(nextSession);
       setUser(nextSession?.user ?? null);
       if (nextSession?.user) {
-        const { data: profile } = await supabase.from("profiles").select("*").eq("id", nextSession.user.id).single();
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", nextSession.user.id)
+          .single();
         setProfile(profile);
       } else {
         setProfile(null);
       }
     });
+
     return () => authListener.subscription.unsubscribe();
   }, [setProfile, setSession, setUser]);
 
@@ -49,17 +60,17 @@ export default function RootLayout() {
 
   if (loading) {
     return (
-      <View className="flex-1">
+      <View style={styles.loadingContainer}>
         <LinearGradient
-          colors={["#7B1E1E", "#C0392B", "#E74C3C"]}
-          className="absolute h-full w-full"
+          colors={["#4A0000", "#C0392B", "#E74C3C"]}
+          style={StyleSheet.absoluteFill}
         />
-        <View className="flex-1 items-center justify-center">
-          <View className="w-24 h-24 bg-white/20 rounded-full items-center justify-center mb-6 border border-white/30">
+        <View style={styles.loadingCenter}>
+          <View style={styles.indicatorWrap}>
             <ActivityIndicator size="large" color="white" />
           </View>
-          <Text className="text-5xl font-extrabold text-white tracking-tighter">sembal</Text>
-          <Text className="mt-2 text-white/80 text-lg font-medium">Blood Response Network</Text>
+          <Text style={styles.logoText}>sembal</Text>
+          <Text style={styles.sloganText}>Blood Response Network</Text>
         </View>
       </View>
     );
@@ -67,8 +78,44 @@ export default function RootLayout() {
 
   return (
     <>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
       <Stack screenOptions={{ headerShown: false }} />
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  loadingCenter: {
+    alignItems: "center",
+  },
+  indicatorWrap: {
+    width: 80,
+    height: 80,
+    backgroundColor: "rgba(255,255,255,0.15)",
+    borderRadius: 40,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.2)",
+  },
+  logoText: {
+    fontSize: 48,
+    fontWeight: "900",
+    color: "#FFFFFF",
+    letterSpacing: -2,
+  },
+  sloganText: {
+    marginTop: 8,
+    fontSize: 16,
+    color: "rgba(255,255,255,0.7)",
+    fontWeight: "600",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+  },
+});

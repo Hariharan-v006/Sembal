@@ -1,20 +1,33 @@
-import { useEffect } from "react";
-import { FlatList, Pressable, Text, View, ActivityIndicator } from "react-native";
+import { useEffect, useState } from "react";
+import {
+  FlatList,
+  Pressable,
+  Text,
+  View,
+  ActivityIndicator,
+  StyleSheet,
+  SafeAreaView,
+} from "react-native";
 import { AppNotification, useNotificationStore } from "@/stores/notificationStore";
 import { useAuthStore } from "@/stores/authStore";
 import { supabase } from "@/lib/supabase";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { StatusBar } from "expo-status-bar";
 
 type NotificationListItem =
   | { kind: "section"; id: string; label: string }
   | { kind: "notification"; id: string; item: AppNotification };
 
-const iconByType: Record<AppNotification["type"], { name: keyof typeof Ionicons.glyphMap; bg: string; color: string }> = {
-  blood_request: { name: "water", bg: "bg-blue-100", color: "#2980B9" },
-  sos: { name: "alert-circle", bg: "bg-red-100", color: "#C0392B" },
-  response: { name: "checkmark-circle", bg: "bg-green-100", color: "#27AE60" },
-  system: { name: "information-circle", bg: "bg-zinc-100", color: "#888888" },
+const themeByType: Record<
+  AppNotification["type"],
+  { name: keyof typeof Ionicons.glyphMap; color: string; bg: string }
+> = {
+  blood_request: { name: "water", color: "#3498DB", bg: "#EBF5FB" },
+  sos: { name: "alert-circle", color: "#C0392B", bg: "#FDEDEC" },
+  response: { name: "checkmark-circle", color: "#27AE60", bg: "#E9F7EF" },
+  system: { name: "information-circle", color: "#8E44AD", bg: "#F5EEF8" },
 };
 
 const getDateLabel = (dateInput: string): string => {
@@ -31,21 +44,33 @@ const getDateLabel = (dateInput: string): string => {
 export default function NotificationsScreen() {
   const profile = useAuthStore((s) => s.profile);
   const { notifications, setNotifications, markAllAsRead, markAsRead, addNotification } = useNotificationStore();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!profile?.id) return;
-    supabase
-      .from("notifications")
-      .select("*")
-      .eq("user_id", profile.id)
-      .order("created_at", { ascending: false })
-      .then(({ data }) => setNotifications((data as AppNotification[]) ?? []));
+    
+    const fetchInitial = async () => {
+      const { data } = await supabase
+        .from("notifications")
+        .select("*")
+        .eq("user_id", profile.id)
+        .order("created_at", { ascending: false });
+      
+      setNotifications((data as AppNotification[]) ?? []);
+      setLoading(false);
+    };
+
+    fetchInitial();
 
     const channel = supabase
-      .channel(`notifications-${profile.id}`)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${profile.id}` }, (payload) => {
-        addNotification(payload.new as AppNotification);
-      })
+      .channel(`notifications-${profile.id}-${Date.now()}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${profile.id}` },
+        (payload) => {
+          addNotification(payload.new as AppNotification);
+        }
+      )
       .subscribe();
 
     return () => {
@@ -59,47 +84,72 @@ export default function NotificationsScreen() {
     markAllAsRead();
   };
 
-  if (!profile) {
-    return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator color="#C0392B" />
-      </View>
-    );
-  }
-
   const grouped = notifications.reduce<Record<string, AppNotification[]>>((acc, notification) => {
     const label = getDateLabel(notification.created_at);
     if (!acc[label]) acc[label] = [];
     acc[label].push(notification);
     return acc;
   }, {});
+
   const listData: NotificationListItem[] = Object.entries(grouped).flatMap(([label, items]) => [
     { kind: "section", id: `section-${label}`, label },
     ...items.map((item) => ({ kind: "notification" as const, id: item.id, item })),
   ]);
 
-  return (
-    <View className="flex-1 bg-white p-4">
-      <View className="flex-row items-center justify-between">
-        <Text className="text-2xl font-bold text-zinc-900">Notifications</Text>
-        <Pressable onPress={markAll}>
-          <Text className="text-[#C0392B]">Mark all read</Text>
-        </Pressable>
+  if (loading && notifications.length === 0) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator color="#C0392B" size="large" />
       </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <StatusBar style="light" />
+      <LinearGradient colors={["#1A1A1A", "#333"]} style={styles.header}>
+        <SafeAreaView>
+          <View style={styles.headerContent}>
+            <Pressable onPress={() => router.back()} style={styles.backBtn}>
+              <Ionicons name="chevron-back" size={24} color="#FFF" />
+            </Pressable>
+            <View style={styles.headerTextWrap}>
+              <Text style={styles.headerTitle}>Updates</Text>
+              <Text style={styles.headerSub}>{notifications.filter(n => !n.is_read).length} new alerts</Text>
+            </View>
+            <Pressable onPress={markAll} style={styles.markAllBtn}>
+              <Text style={styles.markAllText}>Mark all read</Text>
+            </Pressable>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
+
       <FlatList
         data={listData}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingTop: 16, gap: 8 }}
-        ListEmptyComponent={<Text className="text-center text-zinc-500">No notifications yet</Text>}
+        contentContainerStyle={styles.listContainer}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <View style={styles.emptyWrap}>
+            <Ionicons name="notifications-off-outline" size={64} color="#EEE" />
+            <Text style={styles.emptyText}>All caught up!</Text>
+          </View>
+        }
         renderItem={({ item }) => {
           if (item.kind === "section") {
-            return <Text className="mt-1 text-xs font-semibold uppercase text-zinc-500">{item.label}</Text>;
+            return (
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionLabel}>{item.label}</Text>
+                <View style={styles.sectionLine} />
+              </View>
+            );
           }
           const notification = item.item;
-          const icon = iconByType[notification.type];
+          const theme = themeByType[notification.type] || themeByType.system;
+          
           return (
             <Pressable
-              className={`rounded-xl border p-3 ${notification.is_read ? "border-zinc-200" : "border-red-200 bg-red-50"}`}
+              style={[styles.card, !notification.is_read && styles.cardUnread]}
               onPress={async () => {
                 markAsRead(notification.id);
                 await supabase.from("notifications").update({ is_read: true }).eq("id", notification.id);
@@ -107,15 +157,15 @@ export default function NotificationsScreen() {
                 if (requestId) router.push(`/requests/${requestId}`);
               }}
             >
-              <View className="flex-row items-center gap-3">
-                <View className={`h-10 w-10 items-center justify-center rounded-full ${icon.bg}`}>
-                  <Ionicons name={icon.name} size={18} color={icon.color} />
+              <View style={styles.cardContent}>
+                <View style={[styles.iconBox, { backgroundColor: theme.bg }]}>
+                  <Ionicons name={theme.name} size={22} color={theme.color} />
                 </View>
-                <View className="flex-1">
-                  <Text className="font-semibold text-zinc-900">{notification.title}</Text>
-                  <Text className="text-sm text-zinc-600">{notification.body}</Text>
+                <View style={styles.textWrap}>
+                  <Text style={[styles.title, !notification.is_read && styles.titleBold]}>{notification.title}</Text>
+                  <Text style={styles.body} numberOfLines={2}>{notification.body}</Text>
                 </View>
-                {!notification.is_read ? <View className="h-2 w-2 rounded-full bg-[#C0392B]" /> : null}
+                {!notification.is_read && <View style={styles.unreadDot} />}
               </View>
             </Pressable>
           );
@@ -124,3 +174,56 @@ export default function NotificationsScreen() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: "#FDFDFD" },
+  center: { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: "#FFF" },
+  header: { paddingBottom: 20, borderBottomLeftRadius: 30, borderBottomRightRadius: 30 },
+  headerContent: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingVertical: 10 },
+  backBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: "rgba(255,255,255,0.1)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  headerTextWrap: { flex: 1 },
+  headerTitle: { fontSize: 24, fontWeight: "900", color: "#FFF", letterSpacing: -1 },
+  headerSub: { fontSize: 13, color: "rgba(255,255,255,0.6)", fontWeight: "700" },
+  markAllBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, backgroundColor: "rgba(255,255,255,0.1)" },
+  markAllText: { color: "#FFF", fontSize: 12, fontWeight: "800" },
+  listContainer: { padding: 20, paddingBottom: 100 },
+  emptyWrap: { alignItems: "center", marginTop: 100, gap: 16 },
+  emptyText: { fontSize: 16, color: "#CCC", fontWeight: "700" },
+  sectionHeader: { flexDirection: "row", alignItems: "center", marginTop: 20, marginBottom: 16, gap: 12 },
+  sectionLabel: { fontSize: 12, fontWeight: "900", color: "#AAA", textTransform: "uppercase", letterSpacing: 1 },
+  sectionLine: { flex: 1, height: 1, backgroundColor: "#F0F0F0" },
+  card: {
+    backgroundColor: "#FFF",
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.02,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  cardUnread: {
+    backgroundColor: "#FFF",
+    borderColor: "#FFEBEE",
+    borderLeftWidth: 4,
+    borderLeftColor: "#C0392B",
+  },
+  cardContent: { flexDirection: "row", alignItems: "center", gap: 16 },
+  iconBox: { width: 50, height: 50, borderRadius: 16, alignItems: "center", justifyContent: "center" },
+  textWrap: { flex: 1 },
+  title: { fontSize: 15, fontWeight: "600", color: "#1A1A1A", marginBottom: 2 },
+  titleBold: { fontWeight: "800" },
+  body: { fontSize: 13, color: "#666", lineHeight: 18 },
+  unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: "#C0392B" },
+});

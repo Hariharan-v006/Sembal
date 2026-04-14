@@ -41,11 +41,18 @@ export function useNotifications() {
     });
 
     (async () => {
-      const { status } = await Notifications.requestPermissionsAsync();
-      if (status !== "granted") return;
-      const token = (await Notifications.getExpoPushTokenAsync()).data;
-      if (token && token !== profile.push_token) {
-        await supabase.from("profiles").update({ push_token: token }).eq("id", profile.id);
+      try {
+        const { status } = await Notifications.requestPermissionsAsync();
+        if (status !== "granted") return;
+        
+        // This can fail if Firebase is not initialized on Android
+        const token = (await Notifications.getExpoPushTokenAsync()).data;
+        
+        if (token && token !== profile.push_token) {
+          await supabase.from("profiles").update({ push_token: token }).eq("id", profile.id);
+        }
+      } catch (err) {
+        console.warn("Push notifications setup failed (Firebase likely not configured):", err);
       }
     })();
 

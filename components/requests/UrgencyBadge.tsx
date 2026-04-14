@@ -1,16 +1,34 @@
-import { Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { UrgencyLevel } from "@/lib/types";
 
-const styles: Record<UrgencyLevel, { container: string; text: string }> = {
-  normal: { container: "bg-green-100", text: "text-green-700" },
-  urgent: { container: "bg-orange-100", text: "text-orange-700" },
-  critical: { container: "bg-red-100", text: "text-red-700" },
+const COLORS = {
+  normal: { bg: "#E8F5E9", text: "#2E7D32" },
+  urgent: { bg: "#FFF3E0", text: "#E65100" },
+  critical: { bg: "#FFEBEE", text: "#C62828" },
 };
 
 export function UrgencyBadge({ urgency }: { urgency: UrgencyLevel }) {
+  const color = COLORS[urgency] || COLORS.normal;
+  
   return (
-    <View className={`rounded-full px-2 py-1 ${styles[urgency].container}`}>
-      <Text className={`text-xs font-semibold ${styles[urgency].text}`}>{urgency.toUpperCase()}</Text>
+    <View style={[styles.badge, { backgroundColor: color.bg }]}>
+      <Text style={[styles.text, { color: color.text }]}>
+        {urgency.toUpperCase()}
+      </Text>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  badge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 99,
+    alignSelf: "flex-start",
+  },
+  text: {
+    fontSize: 10,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+  },
+});

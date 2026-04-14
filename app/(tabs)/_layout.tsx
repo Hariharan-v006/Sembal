@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
-import { View } from "react-native";
+import { View, StyleSheet, Platform } from "react-native";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 export default function TabsLayout() {
@@ -9,49 +9,111 @@ export default function TabsLayout() {
       screenOptions={{
         tabBarActiveTintColor: "#C0392B",
         tabBarInactiveTintColor: "#AAAAAA",
-        tabBarStyle: { height: 64, borderTopColor: "#E5E5E5" },
+        tabBarStyle: { 
+          height: Platform.OS === 'ios' ? 88 : 68, 
+          borderTopColor: "#F0F0F0",
+          backgroundColor: "#FFFFFF",
+          paddingBottom: Platform.OS === 'ios' ? 30 : 12,
+          paddingTop: 8,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.05,
+          shadowRadius: 10,
+          elevation: 10,
+        },
+        tabBarLabelStyle: {
+          fontSize: 10,
+          fontWeight: "700",
+          marginTop: 2,
+        },
+        headerShown: true,
+        headerStyle: {
+          backgroundColor: "#FFFFFF",
+          elevation: 0,
+          shadowOpacity: 0,
+          borderBottomWidth: 1,
+          borderBottomColor: "#F5F5F5",
+        },
+        headerTitleStyle: {
+          color: "#C0392B",
+          fontWeight: "900",
+          fontSize: 22,
+          letterSpacing: -0.5,
+        },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: "Home",
-          headerTitle: "sembal",
-          headerTitleStyle: { color: "#C0392B", fontWeight: "700", fontSize: 22 },
-          headerRight: () => <NotificationBell />,
-          tabBarIcon: ({ color }) => <Ionicons name="home" size={22} color={color} />,
+          headerShown: false, // Dashboard has its own custom deep header
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? "home" : "home-outline"} size={22} color={color} />
+          ),
         }}
       />
+      
       <Tabs.Screen
         name="sos"
         options={{
           title: "SOS",
           headerShown: false,
           tabBarIcon: () => (
-            <View className="h-12 w-12 items-center justify-center rounded-full bg-[#C0392B]">
-              <Ionicons name="alert-circle" size={28} color="#fff" />
+            <View style={styles.sosContainer}>
+              <View style={styles.sosInner}>
+                <Ionicons name="alert-circle" size={28} color="#fff" />
+              </View>
             </View>
           ),
         }}
       />
+
       <Tabs.Screen
         name="history"
         options={{
           title: "History",
-          headerTitle: "sembal",
-          headerTitleStyle: { color: "#C0392B", fontWeight: "700", fontSize: 22 },
-          headerRight: () => <NotificationBell />,
-          tabBarIcon: ({ color }) => <Ionicons name="time" size={22} color={color} />,
+          headerShown: false, // History now has a custom gradient header too
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? "time" : "time-outline"} size={22} color={color} />
+          ),
         }}
       />
+
       <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",
-          headerShown: false,
-          tabBarIcon: ({ color }) => <Ionicons name="person" size={22} color={color} />,
+          headerShown: false, // Profile has its own header
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? "person" : "person-outline"} size={22} color={color} />
+          ),
         }}
       />
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  sosContainer: {
+    top: -16,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#C0392B",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  sosInner: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "#C0392B",
+    alignItems: "center",
+    justifyContent: "center",
+  }
+});
